@@ -1,4 +1,4 @@
-{ lib }: { config, folder, inputs, ... }@args: let
+{ lib }: { config, folder, ... }@args: let
   inherit (lib.attrsets) filterAttrs mapAttrs' mapAttrs isAttrs nameValuePair attrValues;
   inherit (lib.strings) hasPrefix removeSuffix;
   inherit (lib.lists) imap1 singleton optionals optional sublist;
