@@ -3,7 +3,7 @@
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
   };
-  outputs = { self, nixpkgs, ... }@inputs: {
-    tree = import ./tree.nix { inherit (nixpkgs) lib; };
+  outputs = {nixpkgs, ...}: {
+    tree = import ./tree.nix {inherit (nixpkgs) lib;};
   };
 }
