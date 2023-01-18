@@ -3,11 +3,60 @@
   folder,
   ...
 } @ args: let
-  inherit (std) list string tuple types;
+  inherit (std) list string tuple types optional bool;
   function = std.function // {
     pipe = list.foldl' (function.flip function.compose) function.id;
   };
+    mergeWith = let
+      append = {
+        path,
+        values,
+        canMerge,
+        mapToSet,
+      }: let
+        mergeWith' = values:
+          mergeWith {
+            inherit canMerge mapToSet path;
+            sets = list.map (v: (mapToSet path v).value) values;
+          };
+        mergeUntil = list.findIndex (function.not (canMerge path)) values;
+        len = list.length values;
+      in
+        if len == 0
+        then {}
+        else if len == 1
+        then list.unsafeHead values
+        else if list.all (canMerge path) values
+        then mergeWith' values
+        else
+          optional.match mergeUntil {
+            just = i: let
+              split = list.splitAt i values;
+            in
+              if i > 0
+              then mergeWith' split._0
+              else list.unsafeHead values;
+            nothing = list.unsafeHead values;
+          };
+    in
+      {
+        canMerge ? path: v: optional.isJust (mapToSet path v),
+        mapToSet ? _: v: bool.toOptional (types.attrs.check v) v,
+        path ? [],
+        sets,
+      }:
+        set.mapZip (name: values:
+          append {
+            path = path ++ list.One name;
+            inherit canMerge mapToSet values;
+          })
+        sets;
+    merge = sets:
+      mergeWith {
+        inherit sets;
+      };
   set = std.set // {
+    inherit merge mergeWith;
     remap = f: s: set.fromList (list.map f (set.toList s));
     recursiveMap = f: s: let
       recurse = str: s: let
@@ -79,6 +128,15 @@
             description = "Exclude files or folders from the recurser.";
             default = [];
           };
+          external = mkOption {
+              type = attrsOf unspecified;
+              description = "Add external imports into the tree section";
+              default = {};
+          };
+          functions = mkOption {
+            type = listOf unspecified;
+            default = [];
+          };
           functor = {
             enable = mkOption {
               type = bool;
@@ -137,10 +195,11 @@
           };
         processAliasDefault = prev: prev.default;
         processEvaluation = prev: import prev args;
+        processExternal = prev: merge [ prev leafConfig.external ];
         processDefault = prev:
           import prev.default (args
             // {
-              inherit lib;
+              inherit lib std;
               tree = {
                 prev = set.without (list.singleton "default") prev;
                 pure = pureTree;
@@ -150,9 +209,11 @@
         processExcludes = prev: set.without leafConfig.excludes prev;
         processes = list.optionals (types.attrs.check value) (
           list.optional (leafConfig.excludes != []) processExcludes
+          ++ list.optional (leafConfig.external != []) processExternal
           ++ list.optional leafConfig.evaluateDefault processDefault
           ++ list.optional leafConfig.aliasDefault processAliasDefault
           ++ list.optional leafConfig.functor.enable processFunctor
+          ++ leafConfig.functions
         ) ++ list.optionals (function.not types.attrs.check value) (
           list.optional leafConfig.evaluate processEvaluation
         );
