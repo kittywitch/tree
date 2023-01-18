@@ -145,10 +145,11 @@
         processExcludes = prev: removeAttrs prev leafConfig.excludes;
         processes = optionals (isAttrs value) (
           optional (leafConfig.excludes != []) processExcludes
-          ++ optional leafConfig.evaluate processEvaluation
           ++ optional leafConfig.evaluateDefault processDefault
           ++ optional leafConfig.aliasDefault processAliasDefault
           ++ optional leafConfig.functor.enable processFunctor
+        ) ++ optionals (!isAttrs value) (
+          optional leafConfig.evaluate processEvaluation
         );
       in
         pipe value processes;
