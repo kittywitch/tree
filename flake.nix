@@ -1,9 +1,10 @@
 {
   description = "Tree, an import helper for Nix";
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:nix-community/nixpkgs.lib";
+    std.url = "github:chessai/nix-std";
   };
-  outputs = {nixpkgs, ...}: {
-    tree = import ./tree.nix {inherit (nixpkgs) lib;};
+  outputs = {nixpkgs, std, ...}: {
+    tree = import ./tree.nix {inherit (nixpkgs) lib; std = std.lib;};
   };
 }
