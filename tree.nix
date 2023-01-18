@@ -29,7 +29,7 @@
     dirContents = builtins.readDir path;
     isDirectory = entry: dirContents."${entry}" == "directory";
     isHidden = string.hasPrefix ".";
-    isDir = entry: _: (isDirectory entry) && !(isHidden entry);
+    isDir = entry: _: isDirectory entry && function.not isHidden entry;
     directories = set.filter isDir dirContents;
     isNixFile = entry: _: let
       result = builtins.match "(.*)\\.nix" entry;
@@ -153,7 +153,7 @@
           ++ list.optional leafConfig.evaluateDefault processDefault
           ++ list.optional leafConfig.aliasDefault processAliasDefault
           ++ list.optional leafConfig.functor.enable processFunctor
-        ) ++ list.optionals (!types.attrs.check value) (
+        ) ++ list.optionals (function.not types.attrs.check value) (
           list.optional leafConfig.evaluate processEvaluation
         );
       in
