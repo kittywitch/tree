@@ -11,6 +11,7 @@
     };
   };
   outputs = {nixpkgs, std, ...}: {
-    tree = import ./tree.nix {inherit (nixpkgs) lib; std = std.lib.Std.compat;};
+    std = std;
+    tree = import ./tree.nix {inherit (nixpkgs) lib; std = std.lib.Std.compat // { inherit (std.lib.Std.std) tuple; };};
   };
 }
