@@ -9,6 +9,11 @@
         nix-std.follows = "nix-std";
       };
     };
+    flake-compat = {
+      url = "https://flakehub.com/f/edolstra/flake-compat/1.tar.gz";
+      type = "tarball";
+      flake = false;
+    };
   };
   outputs = {nixpkgs, std, ...}: {
     std = std;
